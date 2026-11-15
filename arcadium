@@ -1,0 +1,858 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict kKHct6EoZkezW5xFOLdj4JESJ9VZg4icfFKtnPAhRWiQObbJMdWRzkTsJCZ1GM6
+
+-- Dumped from database version 18.6
+-- Dumped by pg_dump version 18.6
+
+-- Started on 2026-11-15 10:46:26 MSK
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 228 (class 1259 OID 17934)
+-- Name: achievements; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.achievements (
+    id bigint NOT NULL,
+    name character varying(200) NOT NULL,
+    description text,
+    reward_amount bigint DEFAULT 0 NOT NULL,
+    achievement_type character varying(20) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT achievements_achievement_type_check CHECK (((achievement_type)::text = ANY ((ARRAY['automatic'::character varying, 'admin'::character varying])::text[]))),
+    CONSTRAINT achievements_reward_amount_check CHECK ((reward_amount >= 0))
+);
+
+
+ALTER TABLE public.achievements OWNER TO postgres;
+
+--
+-- TOC entry 227 (class 1259 OID 17933)
+-- Name: achievements_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.achievements ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.achievements_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 226 (class 1259 OID 17910)
+-- Name: award_actions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.award_actions (
+    id bigint NOT NULL,
+    topic_id bigint NOT NULL,
+    name character varying(160) NOT NULL,
+    description text,
+    reward_amount bigint NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    CONSTRAINT award_actions_reward_amount_check CHECK ((reward_amount > 0))
+);
+
+
+ALTER TABLE public.award_actions OWNER TO postgres;
+
+--
+-- TOC entry 3960 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: TABLE award_actions; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.award_actions IS 'Подтемы/действия начисления с фиксированной наградой.';
+
+
+--
+-- TOC entry 225 (class 1259 OID 17909)
+-- Name: award_actions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.award_actions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.award_actions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 224 (class 1259 OID 17896)
+-- Name: award_topics; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.award_topics (
+    id bigint NOT NULL,
+    name character varying(160) NOT NULL,
+    description text,
+    is_active boolean DEFAULT true NOT NULL
+);
+
+
+ALTER TABLE public.award_topics OWNER TO postgres;
+
+--
+-- TOC entry 3961 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: TABLE award_topics; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.award_topics IS 'Темы начисления аркоинов организаторами.';
+
+
+--
+-- TOC entry 223 (class 1259 OID 17895)
+-- Name: award_topics_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.award_topics ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.award_topics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 230 (class 1259 OID 17955)
+-- Name: banners; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.banners (
+    id bigint NOT NULL,
+    title character varying(200) NOT NULL,
+    description text,
+    image_url text NOT NULL,
+    target_url text,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    display_order integer DEFAULT 0 NOT NULL,
+    starts_at timestamp with time zone,
+    ends_at timestamp with time zone,
+    created_by bigint,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT banners_check CHECK (((ends_at IS NULL) OR (starts_at IS NULL) OR (ends_at > starts_at))),
+    CONSTRAINT banners_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'scheduled'::character varying, 'published'::character varying, 'archived'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.banners OWNER TO postgres;
+
+--
+-- TOC entry 3962 (class 0 OID 0)
+-- Dependencies: 230
+-- Name: TABLE banners; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.banners IS 'Объявления главного экрана Mini App.';
+
+
+--
+-- TOC entry 229 (class 1259 OID 17954)
+-- Name: banners_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.banners ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.banners_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 222 (class 1259 OID 17873)
+-- Name: products; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.products (
+    id bigint NOT NULL,
+    name character varying(200) NOT NULL,
+    description text,
+    price bigint NOT NULL,
+    quantity integer DEFAULT 0 NOT NULL,
+    image_url text,
+    is_featured boolean DEFAULT false NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT products_price_check CHECK ((price >= 0)),
+    CONSTRAINT products_quantity_check CHECK ((quantity >= 0))
+);
+
+
+ALTER TABLE public.products OWNER TO postgres;
+
+--
+-- TOC entry 3963 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: TABLE products; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.products IS 'Товары ярмарки; покупка выполняется организатором, а не пользователем в Mini App.';
+
+
+--
+-- TOC entry 221 (class 1259 OID 17872)
+-- Name: products_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.products ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.products_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 232 (class 1259 OID 17979)
+-- Name: transactions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.transactions (
+    id bigint NOT NULL,
+    operation_id uuid NOT NULL,
+    user_id bigint NOT NULL,
+    actor_id bigint,
+    transaction_type character varying(20) NOT NULL,
+    amount bigint NOT NULL,
+    balance_after bigint NOT NULL,
+    reason text NOT NULL,
+    product_id bigint,
+    award_action_id bigint,
+    achievement_id bigint,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT transactions_amount_check CHECK ((amount > 0)),
+    CONSTRAINT transactions_balance_after_check CHECK ((balance_after >= 0)),
+    CONSTRAINT transactions_check CHECK (((((transaction_type)::text = 'purchase'::text) AND (product_id IS NOT NULL)) OR (((transaction_type)::text <> 'purchase'::text) AND (product_id IS NULL)))),
+    CONSTRAINT transactions_check1 CHECK (((((transaction_type)::text = 'achievement'::text) AND (achievement_id IS NOT NULL)) OR (((transaction_type)::text <> 'achievement'::text) AND (achievement_id IS NULL)))),
+    CONSTRAINT transactions_check2 CHECK (((((transaction_type)::text = 'credit'::text) AND (award_action_id IS NOT NULL)) OR (((transaction_type)::text <> 'credit'::text) AND (award_action_id IS NULL)))),
+    CONSTRAINT transactions_transaction_type_check CHECK (((transaction_type)::text = ANY ((ARRAY['credit'::character varying, 'debit'::character varying, 'adjustment'::character varying, 'purchase'::character varying, 'achievement'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.transactions OWNER TO postgres;
+
+--
+-- TOC entry 3964 (class 0 OID 0)
+-- Dependencies: 232
+-- Name: TABLE transactions; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.transactions IS 'Неизменяемый журнал операций с аркоинами.';
+
+
+--
+-- TOC entry 231 (class 1259 OID 17978)
+-- Name: transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.transactions ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.transactions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 234 (class 1259 OID 18029)
+-- Name: user_achievements; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_achievements (
+    id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    achievement_id bigint NOT NULL,
+    granted_by bigint,
+    transaction_id bigint,
+    earned_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.user_achievements OWNER TO postgres;
+
+--
+-- TOC entry 3965 (class 0 OID 0)
+-- Dependencies: 234
+-- Name: TABLE user_achievements; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.user_achievements IS 'Связь пользователей и полученных ими достижений.';
+
+
+--
+-- TOC entry 233 (class 1259 OID 18028)
+-- Name: user_achievements_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.user_achievements ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.user_achievements_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 220 (class 1259 OID 17845)
+-- Name: users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users (
+    id bigint NOT NULL,
+    telegram_id bigint NOT NULL,
+    full_name character varying(200) NOT NULL,
+    university character varying(200) NOT NULL,
+    course smallint NOT NULL,
+    study_group character varying(80) NOT NULL,
+    balance bigint DEFAULT 0 NOT NULL,
+    character_id smallint,
+    role character varying(20) DEFAULT 'user'::character varying NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    registered_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT users_balance_check CHECK ((balance >= 0)),
+    CONSTRAINT users_character_id_check CHECK (((character_id >= 1) AND (character_id <= 4))),
+    CONSTRAINT users_course_check CHECK (((course >= 1) AND (course <= 12))),
+    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['user'::character varying, 'organizer'::character varying, 'admin'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.users OWNER TO postgres;
+
+--
+-- TOC entry 3966 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: TABLE users; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.users IS 'Единый профиль пользователя Telegram-бота и Mini App; баланс хранится в аркоинах.';
+
+
+--
+-- TOC entry 219 (class 1259 OID 17844)
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.users ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.users_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 3948 (class 0 OID 17934)
+-- Dependencies: 228
+-- Data for Name: achievements; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.achievements (id, name, description, reward_amount, achievement_type, is_active, created_at) FROM stdin;
+1	Первое мероприятие	Посещение первого мероприятия Аркадиума	50	automatic	t	2026-11-15 10:29:03.496633+03
+2	Победитель турнира	Победа в турнире по мастер-классу	100	admin	t	2026-11-15 10:29:03.496633+03
+3	Лучший косплей	Награда за лучший косплей	100	admin	t	2026-11-15 10:29:03.496633+03
+4	Исследователь	Достижение в одной из мини-игр	50	automatic	t	2026-11-15 10:29:03.496633+03
+\.
+
+
+--
+-- TOC entry 3946 (class 0 OID 17910)
+-- Dependencies: 226
+-- Data for Name: award_actions; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.award_actions (id, topic_id, name, description, reward_amount, is_active) FROM stdin;
+1	1	Живой пиар	Награда за участие в живом пиаре	30	t
+2	1	Посещение мероприятия	Награда за посещение мероприятия	20	t
+3	2	Помощь организаторам	Награда за помощь команде	15	t
+\.
+
+
+--
+-- TOC entry 3944 (class 0 OID 17896)
+-- Dependencies: 224
+-- Data for Name: award_topics; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.award_topics (id, name, description, is_active) FROM stdin;
+1	Мероприятия	Начисления за участие в мероприятиях	t
+2	Активность	Начисления за активность в проекте	t
+\.
+
+
+--
+-- TOC entry 3950 (class 0 OID 17955)
+-- Dependencies: 230
+-- Data for Name: banners; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.banners (id, title, description, image_url, target_url, status, display_order, starts_at, ends_at, created_by, created_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3942 (class 0 OID 17873)
+-- Dependencies: 222
+-- Data for Name: products; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.products (id, name, description, price, quantity, image_url, is_featured, is_active, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3952 (class 0 OID 17979)
+-- Dependencies: 232
+-- Data for Name: transactions; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.transactions (id, operation_id, user_id, actor_id, transaction_type, amount, balance_after, reason, product_id, award_action_id, achievement_id, created_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3954 (class 0 OID 18029)
+-- Dependencies: 234
+-- Data for Name: user_achievements; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.user_achievements (id, user_id, achievement_id, granted_by, transaction_id, earned_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3940 (class 0 OID 17845)
+-- Dependencies: 220
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.users (id, telegram_id, full_name, university, course, study_group, balance, character_id, role, is_active, registered_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3967 (class 0 OID 0)
+-- Dependencies: 227
+-- Name: achievements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.achievements_id_seq', 4, true);
+
+
+--
+-- TOC entry 3968 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: award_actions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.award_actions_id_seq', 3, true);
+
+
+--
+-- TOC entry 3969 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: award_topics_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.award_topics_id_seq', 2, true);
+
+
+--
+-- TOC entry 3970 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: banners_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.banners_id_seq', 1, false);
+
+
+--
+-- TOC entry 3971 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: products_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.products_id_seq', 1, false);
+
+
+--
+-- TOC entry 3972 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.transactions_id_seq', 1, false);
+
+
+--
+-- TOC entry 3973 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: user_achievements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.user_achievements_id_seq', 1, false);
+
+
+--
+-- TOC entry 3974 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 1, false);
+
+
+--
+-- TOC entry 3761 (class 2606 OID 17953)
+-- Name: achievements achievements_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.achievements
+    ADD CONSTRAINT achievements_name_key UNIQUE (name);
+
+
+--
+-- TOC entry 3763 (class 2606 OID 17951)
+-- Name: achievements achievements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.achievements
+    ADD CONSTRAINT achievements_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3755 (class 2606 OID 17927)
+-- Name: award_actions award_actions_id_topic_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.award_actions
+    ADD CONSTRAINT award_actions_id_topic_id_key UNIQUE (id, topic_id);
+
+
+--
+-- TOC entry 3757 (class 2606 OID 17923)
+-- Name: award_actions award_actions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.award_actions
+    ADD CONSTRAINT award_actions_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3759 (class 2606 OID 17925)
+-- Name: award_actions award_actions_topic_id_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.award_actions
+    ADD CONSTRAINT award_actions_topic_id_name_key UNIQUE (topic_id, name);
+
+
+--
+-- TOC entry 3751 (class 2606 OID 17908)
+-- Name: award_topics award_topics_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.award_topics
+    ADD CONSTRAINT award_topics_name_key UNIQUE (name);
+
+
+--
+-- TOC entry 3753 (class 2606 OID 17906)
+-- Name: award_topics award_topics_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.award_topics
+    ADD CONSTRAINT award_topics_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3765 (class 2606 OID 17972)
+-- Name: banners banners_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.banners
+    ADD CONSTRAINT banners_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3749 (class 2606 OID 17894)
+-- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3771 (class 2606 OID 18002)
+-- Name: transactions transactions_operation_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_operation_id_key UNIQUE (operation_id);
+
+
+--
+-- TOC entry 3773 (class 2606 OID 18000)
+-- Name: transactions transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3776 (class 2606 OID 18038)
+-- Name: user_achievements user_achievements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_achievements
+    ADD CONSTRAINT user_achievements_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3778 (class 2606 OID 18040)
+-- Name: user_achievements user_achievements_transaction_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_achievements
+    ADD CONSTRAINT user_achievements_transaction_id_key UNIQUE (transaction_id);
+
+
+--
+-- TOC entry 3780 (class 2606 OID 18042)
+-- Name: user_achievements user_achievements_user_id_achievement_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_achievements
+    ADD CONSTRAINT user_achievements_user_id_achievement_id_key UNIQUE (user_id, achievement_id);
+
+
+--
+-- TOC entry 3744 (class 2606 OID 17869)
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3746 (class 2606 OID 17871)
+-- Name: users users_telegram_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_telegram_id_key UNIQUE (telegram_id);
+
+
+--
+-- TOC entry 3766 (class 1259 OID 18068)
+-- Name: idx_banners_active_schedule; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_banners_active_schedule ON public.banners USING btree (status, starts_at, ends_at);
+
+
+--
+-- TOC entry 3747 (class 1259 OID 18069)
+-- Name: idx_products_store; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_products_store ON public.products USING btree (is_active, is_featured);
+
+
+--
+-- TOC entry 3767 (class 1259 OID 18066)
+-- Name: idx_transactions_actor_created; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_transactions_actor_created ON public.transactions USING btree (actor_id, created_at DESC);
+
+
+--
+-- TOC entry 3768 (class 1259 OID 18067)
+-- Name: idx_transactions_type; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_transactions_type ON public.transactions USING btree (transaction_type);
+
+
+--
+-- TOC entry 3769 (class 1259 OID 18065)
+-- Name: idx_transactions_user_created; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_transactions_user_created ON public.transactions USING btree (user_id, created_at DESC);
+
+
+--
+-- TOC entry 3774 (class 1259 OID 18070)
+-- Name: idx_user_achievements_user; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_achievements_user ON public.user_achievements USING btree (user_id, earned_at DESC);
+
+
+--
+-- TOC entry 3741 (class 1259 OID 18063)
+-- Name: idx_users_balance_desc; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_users_balance_desc ON public.users USING btree (balance DESC) WHERE (is_active = true);
+
+
+--
+-- TOC entry 3742 (class 1259 OID 18064)
+-- Name: idx_users_role; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_users_role ON public.users USING btree (role);
+
+
+--
+-- TOC entry 3781 (class 2606 OID 17928)
+-- Name: award_actions award_actions_topic_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.award_actions
+    ADD CONSTRAINT award_actions_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES public.award_topics(id) ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 3782 (class 2606 OID 17973)
+-- Name: banners banners_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.banners
+    ADD CONSTRAINT banners_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- TOC entry 3783 (class 2606 OID 18023)
+-- Name: transactions transactions_achievement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_achievement_id_fkey FOREIGN KEY (achievement_id) REFERENCES public.achievements(id) ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 3784 (class 2606 OID 18008)
+-- Name: transactions transactions_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- TOC entry 3785 (class 2606 OID 18018)
+-- Name: transactions transactions_award_action_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_award_action_id_fkey FOREIGN KEY (award_action_id) REFERENCES public.award_actions(id) ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 3786 (class 2606 OID 18013)
+-- Name: transactions transactions_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 3787 (class 2606 OID 18003)
+-- Name: transactions transactions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 3788 (class 2606 OID 18048)
+-- Name: user_achievements user_achievements_achievement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_achievements
+    ADD CONSTRAINT user_achievements_achievement_id_fkey FOREIGN KEY (achievement_id) REFERENCES public.achievements(id) ON DELETE RESTRICT;
+
+
+--
+-- TOC entry 3789 (class 2606 OID 18053)
+-- Name: user_achievements user_achievements_granted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_achievements
+    ADD CONSTRAINT user_achievements_granted_by_fkey FOREIGN KEY (granted_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- TOC entry 3790 (class 2606 OID 18058)
+-- Name: user_achievements user_achievements_transaction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_achievements
+    ADD CONSTRAINT user_achievements_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES public.transactions(id) ON DELETE SET NULL;
+
+
+--
+-- TOC entry 3791 (class 2606 OID 18043)
+-- Name: user_achievements user_achievements_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_achievements
+    ADD CONSTRAINT user_achievements_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE RESTRICT;
+
+
+-- Completed on 2026-11-15 10:46:26 MSK
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict kKHct6EoZkezW5xFOLdj4JESJ9VZg4icfFKtnPAhRWiQObbJMdWRzkTsJCZ1GM6
+
